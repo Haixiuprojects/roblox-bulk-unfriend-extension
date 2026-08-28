@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Roblox Bulk Unfriend Selector",
+  "version": "2.3.0",
+  "description": "Auto-detect ng selected Roblox friend profile URLs at max-5-tab official Unfriend workflow.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["https://www.roblox.com/users/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.roblox.com/users/friends*",
+        "https://www.roblox.com/users/*/profile*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
