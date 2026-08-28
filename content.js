@@ -217,12 +217,12 @@
     if (!card.querySelector(`.${CHECKBOX_CLASS}`)) {
       const wrapper = document.createElement('label');
       wrapper.className = CHECKBOX_CLASS;
-      wrapper.title = `Piliin si ${displayName} (${username || 'username unavailable'})`;
+      wrapper.title = `Select ${displayName} (${username || 'username unavailable'})`;
       wrapper.addEventListener('click', (event) => event.stopPropagation());
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.setAttribute('aria-label', `Piliin si ${displayName}`);
+      checkbox.setAttribute('aria-label', `Select ${displayName}`);
       checkbox.checked = selected.has(userId);
       checkbox.addEventListener('click', (event) => event.stopPropagation());
       checkbox.addEventListener('change', () => toggleSelection(record, checkbox));
@@ -359,8 +359,8 @@
       if (!confirmed) return { ok: false, reason: 'cancelled-by-user' };
     }
     const result = await performDirectCardUnfriend(record);
-    if (result.ok) setStatus(`Na-unfriend si ${record.displayName} mula sa card.`, 'success');
-    else if (result.reason !== 'cancelled-by-user') setStatus(`Hindi na-unfriend si ${record.displayName}: ${result.reason}`, 'error');
+    if (result.ok) setStatus(`Unfriended ${record.displayName} from the card.`, 'success');
+    else if (result.reason !== 'cancelled-by-user') setStatus(`Could not unfriend ${record.displayName}: ${result.reason}`, 'error');
     return result;
   }
 
@@ -406,7 +406,7 @@
     document.querySelectorAll('.rbu-selected-card').forEach((card) => card.classList.remove('rbu-selected-card'));
 
     if (currentMode === 'auto-all' && success > 0 && failed.length === 0) {
-      setStatus(`Auto all complete: ${success}/${records.length}. Nire-refresh ang Friends page at ise-select ulit ang visible users…`, 'success');
+      setStatus(`Auto all complete: ${success}/${records.length}. Refreshing the Friends page and selecting visible users again…`, 'success');
       window.setTimeout(() => location.assign('/users/friends#!/friends'), 900);
     } else if (failed.length) {
       setStatus(`Direct-card done: ${success}/${records.length} successful, ${failed.length} failed.`, 'error');
@@ -507,7 +507,7 @@
 
     const subtitle = document.createElement('p');
     subtitle.className = 'rbu-subtitle';
-    subtitle.textContent = 'Normal = selected cards; Auto all = visible cards; max 5 tabs; Auto-run loops after confirmation.';
+    subtitle.textContent = 'Normal = selected cards; Auto all = visible cards; max 5 tabs; Auto-run repeats after confirmation.';
 
     const modeRow = document.createElement('div');
     modeRow.className = 'rbu-mode-row';
@@ -516,7 +516,7 @@
     modeLabel.setAttribute('for', 'rbu-mode');
     const mode = document.createElement('select');
     mode.id = 'rbu-mode';
-    mode.title = 'Normal = ikaw ang pipili; Auto all = lahat ng visible friends; max 5 profile tabs';
+    mode.title = 'Normal = you select users; Auto all = all visible friends; max 5 profile tabs';
     mode.innerHTML = '<option value="normal">Normal — selected cards (max 5 tabs)</option><option value="auto-all">Auto all — visible + next page</option>';
     mode.value = currentMode;
     mode.addEventListener('change', async () => {
@@ -530,15 +530,15 @@
       if (currentMode === 'auto-all') {
         refreshCards();
         setStatus(autoRunEnabled
-          ? 'Auto all + Auto-run: automatic na ang susunod na batch pagkatapos ng confirmation.'
-          : 'Auto all mode: visible users ang automatic na ise-select.');
+          ? 'Auto all + Auto-run: the next batch will start automatically after confirmation.'
+          : 'Auto all mode: visible users are selected automatically.');
         if (autoRunEnabled) kickoffAutoRunIfEnabled();
       } else {
         if (autoRunControl) {
           autoRunControl.checked = false;
           saveAutoRun(false);
         }
-        setStatus('Normal mode: ikaw ang pipili ng users gamit ang checkboxes.');
+        setStatus('Normal mode: select users using the checkboxes.');
       }
     });
     modeRow.append(modeLabel, mode);
@@ -575,12 +575,12 @@
     autoRun.checked = autoRunEnabled && currentMode === 'auto-all';
     autoRun.disabled = currentMode !== 'auto-all';
     const autoText = document.createElement('span');
-    autoText.textContent = 'Auto-run loop (huwag nang pindutin ang red button)';
+    autoText.textContent = 'Auto-run loop (no need to press the red button)';
     autoRow.append(autoRun, autoText);
 
     const status = document.createElement('div');
     status.className = 'rbu-status';
-    status.textContent = 'Ready. I-scan ulit ang list kung may bagong cards na lumabas.';
+    status.textContent = 'Ready. The list will be scanned again when new cards appear.';
 
     toolbar.append(title, subtitle, modeRow, row, run, stop, autoRow, status);
     document.body.appendChild(toolbar);
@@ -592,7 +592,7 @@
 
     clear.addEventListener('click', () => {
       clearSelection();
-      setStatus('Walang napiling friend.');
+      setStatus('No friend selected.');
     });
 
     run.addEventListener('click', () => {
@@ -605,7 +605,7 @@
       autoRun.checked = false;
       isStarting = false;
       setControlsDisabled(false);
-      setStatus('Pinahinto ang active batch at isinara ang owned profile tabs.', 'error');
+      setStatus('Stopped the active batch and closed owned profile tabs.', 'error');
     });
 
     autoRun.addEventListener('change', async () => {
@@ -618,7 +618,7 @@
         autoRun.checked = false;
         return;
       }
-      const confirmed = window.confirm('I-enable ang Auto-run loop? Pagkatapos ng unang confirmation, automatic na magse-select at mag-u-unfriend ng susunod na visible batches hanggang maubos o magkaroon ng error. Maaari mong pindutin ang Stop batch anumang oras.');
+      const confirmed = window.confirm('Enable the Auto-run loop? After the one-time confirmation, it will automatically select and unfriend subsequent visible batches until there are no users left or an error occurs. You can press Stop batch at any time.');
       if (!confirmed) {
         autoRun.checked = false;
         await saveAutoRun(false);
@@ -627,7 +627,7 @@
       await saveAutoRun(true);
       refreshCards();
       selectVisibleFriends(false);
-      setStatus('Auto-run loop naka-enable. Pinipili ang visible users at sisimulan ang batch…', 'success');
+      setStatus('Auto-run loop enabled. Selecting visible users and starting the batch…', 'success');
       startParallelBatch({ skipConfirm: true });
     });
   }
@@ -767,14 +767,14 @@
     refreshCards();
     const records = Array.from(selected.values()).filter((record) => record.card?.isConnected);
     if (!records.length) {
-      setStatus('Walang napiling friend.', 'error');
+      setStatus('No friend selected.', 'error');
       return;
     }
 
     const preview = records.slice(0, 8).map((record) => `${record.displayName} (${record.username})`).join('\n');
     const extra = records.length > 8 ? `\n… at ${records.length - 8} pa.` : '';
     const confirmed = window.confirm(
-      `I-unfriend ang ${records.length} selected friend(s)?\n\n${preview}${extra}\n\nBubuksan ang profile ng bawat user at iki-click ang official Unfriend menu. Hindi na madaling maibabalik ang action.`,
+      `I-unfriend ang ${records.length} selected friend(s)?\n\n${preview}${extra}\n\nEach selected user profile will be opened and the official Unfriend menu will be clicked. This action may not be reversible.`,
     );
     if (!confirmed) return;
 
@@ -792,7 +792,7 @@
     };
 
     await storageSet(job);
-    setStatus(`Naka-save ang queue. Pupunta sa profile 1/${job.items.length}…`);
+    setStatus(`Queue saved. Opening profile 1/${job.items.length}…`);
     await sleep(350);
     location.assign(job.items[0].profileUrl);
   }
@@ -844,7 +844,7 @@
       job.active = false;
       job.finishedAt = new Date().toISOString();
       await storageSet(job);
-      setStatus(`Tapos. ${job.done} successful, ${job.failed.length} failed. Babalik sa Friends page…`, job.failed.length ? 'error' : 'success', RUNNER_ID);
+      setStatus(`Finished. ${job.done} successful, ${job.failed.length} failed. Returning to the Friends page…`, job.failed.length ? 'error' : 'success', RUNNER_ID);
       await sleep(1200);
       location.assign('https://www.roblox.com/users/friends#!/friends');
       return;
@@ -869,16 +869,16 @@
 
     const status = document.createElement('div');
     status.className = 'rbu-status';
-    status.textContent = `Inihahanda ang user ${userId}…`;
+    status.textContent = `Preparing user ${userId}…`;
 
     const note = document.createElement('p');
     note.className = 'rbu-subtitle';
-    note.textContent = 'Official profile menu → Unfriend → optional confirmation. Isasara ang tab pagkatapos ng result.';
+    note.textContent = 'Official profile menu → Unfriend → optional confirmation. The tab closes after the result.';
 
     const stop = makeButton('rbu-stop', 'Stop all parallel tabs');
     stop.addEventListener('click', async () => {
       await runtimeMessage({ type: 'RBU_STOP_PARALLEL' });
-      setStatus('Pinahinto ang parallel queue.', 'error', RUNNER_ID);
+      setStatus('Parallel queue stopped.', 'error', RUNNER_ID);
     });
 
     runner.append(title, status, note, stop);
@@ -889,10 +889,10 @@
     if (parallelProfileStarted) return;
     parallelProfileStarted = true;
     createParallelRunner(userId);
-    setStatus(`Profile ${userId} loaded. Hinahanap agad ang Unfriend menu…`, '', RUNNER_ID);
+    setStatus(`Profile ${userId} loaded. Looking for the Unfriend menu…`, '', RUNNER_ID);
     const result = await performProfileUnfriend();
-    if (result.ok) setStatus('Na-click ang official Unfriend control; magsasara ang tab.', 'success', RUNNER_ID);
-    else setStatus(`Hindi na-click ang Unfriend: ${result.reason}`, 'error', RUNNER_ID);
+    if (result.ok) setStatus('Official Unfriend control clicked; closing the tab.', 'success', RUNNER_ID);
+    else setStatus(`Could not click Unfriend: ${result.reason}`, 'error', RUNNER_ID);
     await runtimeMessage({ type: PARALLEL_RESULT_MESSAGE, result, ownerToken: String(ownerToken || '') });
   }
 
@@ -905,14 +905,14 @@
       && /^https:\/\/www\.roblox\.com\/users\/\d+\/profile(?:[?#].*)?$/i.test(record.profileUrl)
     ));
     if (!records.length) {
-      setStatus('Walang valid na checked friend. I-check ang tamang cards at subukan ulit.', 'error');
+      setStatus('No valid checked friend. Check the correct cards and try again.', 'error');
       return;
     }
 
     const preview = records.slice(0, 8).map((record) => `${record.displayName} (${record.username})`).join('\\n');
     const extra = records.length > 8 ? `\\n… at ${records.length - 8} pa.` : '';
     const confirmed = skipConfirm || window.confirm(
-      `Buksan ang ${Math.min(records.length, 5)} profile tab(s) muna at i-unfriend ang ${records.length} selected user(s) sa ${currentMode === 'auto-all' ? 'Auto all' : 'Normal selected-users'} mode?\\n\\n${preview}${extra}\\n\\nMaximum 5 tabs lang ang sabay-sabay; susunod ang natitira kapag may tab nang nagsara. Ang bawat tab ay gagamit ng official Roblox Unfriend menu at magsasara pagkatapos.`,
+      `Open ${Math.min(records.length, 5)}  profile tab(s) and unfriend ${records.length}  selected user(s) in ${currentMode === 'auto-all' ? 'Auto all' : 'Normal selected-users'} mode?\\n\\n${preview}${extra}\\n\\nA maximum of 5 tabs run at once; remaining users start when a tab closes. Each tab uses the official Roblox Unfriend menu and closes afterward.`,
     );
     if (!confirmed) return;
 
@@ -934,7 +934,7 @@
       return;
     }
 
-    setStatus(`Binubuksan ang ${response.accepted || records.length} profile tab(s) sa background…`);
+    setStatus(`Opening ${response.accepted || records.length} profile tab(s) in the background…`);
     monitorParallelJob();
   }
 
@@ -943,7 +943,7 @@
     const marker = `${job.ownerToken || 'job'}:${job.finishedAt}`;
     if (sessionStorage.getItem(AUTO_REFRESH_KEY) === marker) return true;
     sessionStorage.setItem(AUTO_REFRESH_KEY, marker);
-    setStatus('Naghihintay sa Roblox auto-updated Friends list…', 'success');
+    setStatus('Waiting for Roblox to update the Friends list…', 'success');
     await sleep(1200);
     clearProcessedAutoCards(job);
     refreshCards();
@@ -961,14 +961,14 @@
     }
     selectVisibleFriends(false);
     if (!autoRunEnabled) {
-      setStatus(`${selected.size} bagong visible friend(s) ang auto-selected. I-enable ang Auto-run o pindutin ang red button para magpatuloy.`, 'success');
+      setStatus(`${selected.size} new visible friend(s) were selected automatically. Enable Auto-run or press the red button to continue.`, 'success');
       return true;
     }
     if (!selected.size) {
-      setStatus('Auto-run naka-enable pa rin; walang bagong visible friend cards. Maghihintay ito sa Roblox list update…', 'success');
+      setStatus('Auto-run remains enabled; there are no new visible friend cards. Waiting for the Roblox list update…', 'success');
       return true;
     }
-    setStatus(`${selected.size} bagong visible friend(s) ang auto-selected. Awtomatikong sinisimulan ang susunod na batch…`, 'success');
+    setStatus(`${selected.size} new visible friend(s) were selected automatically. Starting the next batch automatically…`, 'success');
     await sleep(500);
     await startParallelBatch({ skipConfirm: true });
     return true;
@@ -1006,14 +1006,14 @@
     const nextButton = findNextPageButton();
     if (!nextButton) {
       clearSelection();
-      setStatus(`Auto all complete: ${job.done || 0} users processed. Wala nang next page.`, 'success');
+      setStatus(`Auto all complete: ${job.done || 0} users processed. There is no next page.`, 'success');
       sessionStorage.setItem(`${AUTO_REFRESH_KEY}:advanced`, marker);
       return;
     }
 
     sessionStorage.setItem(`${AUTO_REFRESH_KEY}:advanced`, marker);
     clearSelection();
-    setStatus('Auto all complete. Nire-reset ang selection at pumupunta sa next page…', 'success');
+    setStatus('Auto all complete. Resetting the selection and moving to the next page…', 'success');
     clickLikeUser(nextButton);
     const changed = await waitFor(() => {
       const after = pageSignature();
@@ -1021,7 +1021,7 @@
     }, 15000, 400);
 
     if (!changed) {
-      setStatus('Hindi nakita ang bagong page pagkatapos pindutin ang next arrow. Hinto muna ang Auto loop.', 'error');
+      setStatus('The next page did not appear after clicking the next arrow. Pausing the Auto loop.', 'error');
       return;
     }
 
@@ -1076,17 +1076,17 @@
     const item = job.items[job.index];
     const currentId = currentProfileId();
     if (currentId !== item.userId) {
-      setStatus(`Inaayos ang queue navigation: ${item.displayName}…`, '', RUNNER_ID);
+      setStatus(`Preparing queue navigation: ${item.displayName}…`, '', RUNNER_ID);
       location.assign(item.profileUrl);
       return;
     }
 
-    setStatus(`Hinahanap ang profile menu para kay ${item.displayName}…`, '', RUNNER_ID);
+    setStatus(`Looking for the profile menu for ${item.displayName}…`, '', RUNNER_ID);
     const result = await performProfileUnfriend();
     if (result.ok) {
-      setStatus(`Na-click ang Unfriend para kay ${item.displayName}.`, 'success', RUNNER_ID);
+      setStatus(`Clicked Unfriend for ${item.displayName}.`, 'success', RUNNER_ID);
     } else {
-      setStatus(`Hindi na-click kay ${item.displayName}: ${result.reason}`, 'error', RUNNER_ID);
+      setStatus(`Could not click Unfriend for ${item.displayName}: ${result.reason}`, 'error', RUNNER_ID);
     }
     await advanceProfileJob(job, result);
   }
@@ -1097,9 +1097,9 @@
       if (job.stopped) {
         setStatus(`Queue stopped. ${job.done} successful, ${job.failed.length} failed.`, 'error');
       } else if (job.failed?.length) {
-        setStatus(`Tapos: ${job.done} successful, ${job.failed.length} failed. Piliin ulit ang failed users kung kailangan.`, 'error');
+        setStatus(`Finished: ${job.done} successful, ${job.failed.length} failed. Select failed users again if needed.`, 'error');
       } else if (job.done) {
-        setStatus(`Tapos: ${job.done} user(s) ang na-process. I-refresh ang list para ma-verify.`, 'success');
+        setStatus(`Finished: ${job.done} user(s) processed. Refresh the list to verify.`, 'success');
       }
       return;
     }
@@ -1122,7 +1122,7 @@
     const job = await storageGet();
     if (!job?.active || !job.items?.[job.index]) return;
     setControlsDisabled(true);
-    setStatus(`May active queue: ${job.index + 1}/${job.items.length}. Ire-resume ang profile flow…`);
+    setStatus(`Active queue: ${job.index + 1}/${job.items.length}. Resuming the profile flow…`);
     await sleep(700);
     location.assign(job.items[job.index].profileUrl);
   }
@@ -1138,10 +1138,10 @@
     refreshCards();
     selectVisibleFriends(false);
     if (!selected.size) {
-      setStatus('Auto-run naka-enable at naghihintay ng bagong visible friend cards…', 'success');
+      setStatus('Auto-run remains enabled and is waiting for new visible friend cards…', 'success');
       return;
     }
-    setStatus('Auto-run enabled: automatic na magsisimula ang selected visible batch…', 'success');
+    setStatus('Auto-run enabled: the selected visible batch will start automatically…', 'success');
     await startParallelBatch({ skipConfirm: true });
   }
 
